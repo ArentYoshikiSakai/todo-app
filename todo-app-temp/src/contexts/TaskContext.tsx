@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Task, TaskContextType } from '../types';
 import { taskService } from '../services/tasks';
-import { useAuth } from './AuthContext';
+import { useAuth } from './AuthContext.tsx';
 
 // デフォルト値を持つコンテキストを作成
 const TaskContext = createContext<TaskContextType>({
