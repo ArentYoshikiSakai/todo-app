@@ -52,3 +52,34 @@ export default tseslint.config({
   },
 })
 ```
+
+## セキュリティルール
+
+このアプリケーションでは、Firestoreのセキュリティルールを使用してデータの保護を行っています。
+
+### セキュリティモデル
+
+- 各ユーザーは自分のタスクのみ作成・読取・更新・削除が可能
+- 認証されていないユーザーはタスクにアクセスできない
+- その他のコレクションへのアクセスはすべて制限
+
+### デプロイ方法
+
+セキュリティルールをデプロイするには以下のコマンドを実行します：
+
+```bash
+# Firebase CLIがインストールされていることを確認
+npm install -g firebase-tools
+
+# Firebase にログイン
+firebase login
+
+# ルールのデプロイ
+node deploy-rules.js
+```
+
+または直接デプロイする場合：
+
+```bash
+firebase deploy --only firestore:rules
+```
