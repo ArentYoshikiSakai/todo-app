@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Task } from '../types';
 import { taskService } from '../services/tasks';
-import { useAuth } from './useAuth';
+import { useAuth } from '../contexts/AuthContext';
 
 export function useTasks() {
-  const { user } = useAuth();
+  const { currentUser: user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [filter, setFilter] = useState<'all' | 'completed' | 'active'>('all');
+  // リスナーの参照を保持するRef
+  const unsubscribeRef = useRef<(() => void) | undefined>(undefined);
 
   useEffect(() => {
     if (!user) {
@@ -17,7 +19,16 @@ export function useTasks() {
       return;
     }
 
+    console.log('現在のユーザーID:', user.uid);
+    
+    // 前のリスナーがあればクリーンアップ
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
+    }
+    
     const unsubscribe = taskService.onTasksChanged(user.uid, (newTasks) => {
+      console.log('取得したタスク:', newTasks);
+      
       // フィルタリングをクライアント側で行う
       let filteredTasks = newTasks;
       if (filter === 'completed') {
@@ -30,13 +41,23 @@ export function useTasks() {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    // リスナーの参照を保存
+    unsubscribeRef.current = unsubscribe;
+
+    // クリーンアップ関数
+    return () => {
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+      }
+    };
   }, [user, filter]);
 
   const addTask = async (title: string, description?: string) => {
     try {
       if (!user) throw new Error('認証が必要です');
       setError(null);
+      
+      console.log('タスク追加:', { title, description, userId: user.uid });
       
       await taskService.createTask({
         title,

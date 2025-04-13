@@ -191,6 +191,9 @@ export const taskService: TaskService = {
 ```typescript
 // src/hooks/useAuth.ts
 
+import { useAuth } from '../contexts/AuthContext';
+const { currentUser: user } = useAuth();
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -251,6 +254,9 @@ export function useAuth() {
 #### タスク管理フック
 ```typescript
 // src/hooks/useTasks.ts
+
+import { useAuth } from '../contexts/AuthContext';
+const { currentUser: user } = useAuth();
 
 export function useTasks() {
   const { user } = useAuth();

@@ -46,6 +46,8 @@ export const taskService: TaskService = {
     const user = auth.currentUser;
     if (!user) throw new Error('認証が必要です');
 
+    console.log('Firestoreにタスクを作成:', task);
+
     const taskData = {
       ...task,
       userId: user.uid,
@@ -54,8 +56,14 @@ export const taskService: TaskService = {
       updatedAt: serverTimestamp()
     };
 
-    const docRef = await addDoc(collection(db, 'tasks'), taskData);
-    return docRef.id;
+    try {
+      const docRef = await addDoc(collection(db, 'tasks'), taskData);
+      console.log('タスク作成成功:', docRef.id);
+      return docRef.id;
+    } catch (error) {
+      console.error('タスク作成エラー:', error);
+      throw error;
+    }
   },
   
   getTasks: async (userId, filter = 'all') => {
@@ -131,28 +139,63 @@ export const taskService: TaskService = {
   },
   
   onTasksChanged: (userId, callback) => {
-    const q = query(
-      collection(db, 'tasks'),
-      where('userId', '==', userId),
-      orderBy('createdAt', 'desc')
-    );
+    console.log('タスク変更リスナーを設定:', userId);
     
-    return onSnapshot(q, (snapshot) => {
-      const tasks = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          userId: data.userId,
-          title: data.title,
-          description: data.description,
-          completed: data.completed,
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date()
-        } as Task;
-      });
+    try {
+      // インデックスエラーを回避するため、単純なクエリに変更
+      const q = query(
+        collection(db, 'tasks'),
+        where('userId', '==', userId)
+      );
       
-      callback(tasks);
-    });
+      return onSnapshot(q, (snapshot) => {
+        console.log('Firestoreからの更新:', snapshot.docs.length, '件のタスク');
+        
+        const tasks = snapshot.docs.map(doc => {
+          const data = doc.data();
+          console.log('タスクデータ:', doc.id, data);
+          
+          // タイムスタンプのチェックと変換
+          let createdAt = data.createdAt;
+          let updatedAt = data.updatedAt;
+          
+          if (createdAt && typeof createdAt.toDate === 'function') {
+            createdAt = createdAt.toDate();
+          } else if (!createdAt) {
+            createdAt = new Date();
+          }
+          
+          if (updatedAt && typeof updatedAt.toDate === 'function') {
+            updatedAt = updatedAt.toDate();
+          } else if (!updatedAt) {
+            updatedAt = new Date();
+          }
+          
+          return {
+            id: doc.id,
+            userId: data.userId,
+            title: data.title || '',
+            description: data.description || '',
+            completed: Boolean(data.completed),
+            createdAt,
+            updatedAt
+          } as Task;
+        });
+        
+        // クライアント側でソート
+        const sortedTasks = tasks.sort((a, b) => 
+          b.createdAt.getTime() - a.createdAt.getTime()
+        );
+        
+        callback(sortedTasks);
+      }, (error) => {
+        console.error('タスク監視エラー:', error);
+      });
+    } catch (error) {
+      console.error('リスナー設定エラー:', error);
+      // エラー時にはダミーのunsubscribe関数を返す
+      return () => {};
+    }
   }
 };
 

@@ -11,6 +11,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
 
   const handleToggleComplete = async () => {
     try {
+      console.log('タスク状態切り替え:', task.id, !task.completed);
       await toggleCompletion(task.id, !task.completed);
     } catch (error) {
       console.error('タスク更新エラー:', error);
@@ -19,9 +20,28 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
 
   const handleDelete = async () => {
     try {
+      console.log('タスク削除:', task.id);
       await deleteTask(task.id);
     } catch (error) {
       console.error('タスク削除エラー:', error);
+    }
+  };
+
+  // Dateオブジェクトかどうかをチェックしてからフォーマット
+  const formatDate = (date: Date | any) => {
+    if (!date) return '日付なし';
+    
+    try {
+      if (typeof date === 'string') {
+        return new Date(date).toLocaleDateString('ja-JP');
+      }
+      if (date instanceof Date) {
+        return date.toLocaleDateString('ja-JP');
+      }
+      return '不明な日付形式';
+    } catch (error) {
+      console.error('日付フォーマットエラー:', error, date);
+      return '日付エラー';
     }
   };
 
@@ -51,11 +71,9 @@ const TaskItem: React.FC<TaskItemProps> = ({ task }) => {
               {task.description}
             </p>
           )}
-          {task.createdAt && (
-            <p className="mt-2 text-xs text-gray-400">
-              {new Date(task.createdAt).toLocaleDateString('ja-JP')}
-            </p>
-          )}
+          <p className="mt-2 text-xs text-gray-400">
+            作成日: {formatDate(task.createdAt)}
+          </p>
         </div>
         
         <button
