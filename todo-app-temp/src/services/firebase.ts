@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 
 // Firebaseの構成オブジェクト
 // 実際の値は環境変数またはFirebaseコンソールからコピーして使用します
@@ -13,7 +13,21 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+// 開発環境の場合にはデバッグ情報を出力
+if (import.meta.env.DEV) {
+  console.log('Firebase config:', {
+    apiKey: firebaseConfig.apiKey?.substring(0, 5) + '...',
+    projectId: firebaseConfig.projectId,
+    appId: firebaseConfig.appId?.substring(0, 8) + '...',
+  });
+}
+
 // Firebaseの初期化
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app); 
+export const db = getFirestore(app);
+
+// 開発環境でエミュレーターを使用する場合はコメントを外す
+// if (import.meta.env.DEV) {
+//   connectFirestoreEmulator(db, 'localhost', 8080);
+// } 
