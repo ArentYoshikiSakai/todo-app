@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 export const LoginForm: React.FC = () => {
@@ -7,6 +8,7 @@ export const LoginForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,7 +17,8 @@ export const LoginForm: React.FC = () => {
 
     try {
       await login(email, password);
-      // ログイン成功時は自動的にリダイレクトされるので何もしない
+      // ログイン成功時に明示的にタスク管理ページへ遷移
+      navigate('/');
     } catch (error) {
       setErrorMessage((error as Error).message || 'ログインに失敗しました');
       setIsLoading(false);
@@ -76,9 +79,9 @@ export const LoginForm: React.FC = () => {
         </div>
         
         <div className="text-center text-sm">
-          <a className="text-indigo-600 hover:text-indigo-800" href="/register">
+          <Link to="/register" className="text-indigo-600 hover:text-indigo-800">
             アカウントをお持ちでない方はこちら
-          </a>
+          </Link>
         </div>
       </form>
     </div>
